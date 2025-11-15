@@ -18,6 +18,9 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
   const [transform, setTransform] = useState({ scale: 1, translateX: 0, translateY: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const startPanPointRef = useRef({ x: 0, y: 0 });
+  const startTransformRef = useRef({ scale: 1, translateX: 0, translateY: 0 });
+  const initialPinchDistanceRef = useRef(0);
+
 
   const resetView = () => {
     setTransform({ scale: 1, translateX: 0, translateY: 0 });
@@ -57,6 +60,7 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
     e.preventDefault();
     setIsPanning(true);
     startPanPointRef.current = { x: e.clientX, y: e.clientY };
+    startTransformRef.current = { ...transform };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -65,12 +69,11 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
     const dx = e.clientX - startPanPointRef.current.x;
     const dy = e.clientY - startPanPointRef.current.y;
     
-    setTransform(prev => ({
-      ...prev,
-      translateX: prev.translateX + dx,
-      translateY: prev.translateY + dy,
-    }));
-    startPanPointRef.current = { x: e.clientX, y: e.clientY };
+    setTransform({
+      ...transform,
+      translateX: startTransformRef.current.translateX + dx,
+      translateY: startTransformRef.current.translateY + dy,
+    });
   };
 
   const handleMouseUpOrLeave = (e: React.MouseEvent) => {
@@ -78,6 +81,54 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
       e.preventDefault();
       setIsPanning(false);
     }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+     e.preventDefault();
+    if (e.touches.length === 1) { // Pan
+      setIsPanning(true);
+      startPanPointRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      startTransformRef.current = { ...transform };
+    } else if (e.touches.length === 2) { // Zoom
+      setIsPanning(false); // Stop panning when zoom starts
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      initialPinchDistanceRef.current = Math.sqrt(dx * dx + dy * dy);
+      startTransformRef.current = { ...transform };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+     e.preventDefault();
+    if (e.touches.length === 1 && isPanning) { // Pan
+      const dx = e.touches[0].clientX - startPanPointRef.current.x;
+      const dy = e.touches[0].clientY - startPanPointRef.current.y;
+      setTransform({
+        ...transform,
+        translateX: startTransformRef.current.translateX + dx,
+        translateY: startTransformRef.current.translateY + dy,
+      });
+    } else if (e.touches.length === 2 && initialPinchDistanceRef.current > 0) { // Zoom
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const currentPinchDistance = Math.sqrt(dx * dx + dy * dy);
+      const scaleMultiplier = currentPinchDistance / initialPinchDistanceRef.current;
+      const newScale = Math.max(1, startTransformRef.current.scale * scaleMultiplier);
+      
+      const svgRect = e.currentTarget.getBoundingClientRect();
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - svgRect.left;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - svgRect.top;
+
+      const newTranslateX = midX - (midX - startTransformRef.current.translateX) * (newScale / startTransformRef.current.scale);
+      const newTranslateY = midY - (midY - startTransformRef.current.translateY) * (newScale / startTransformRef.current.scale);
+      
+      setTransform({ scale: newScale, translateX: newTranslateX, translateY: newTranslateY });
+    }
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsPanning(false);
+    initialPinchDistanceRef.current = 0;
   };
 
   const formatNumber = (num: number): string => {
@@ -135,8 +186,8 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
       <div 
         ref={containerRef} 
         className="w-full overflow-hidden border border-gray-200 rounded-md" 
-        style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
-        aria-label="Rappresentazione visiva del muro e degli oggetti. Usa la rotellina del mouse per zoomare e trascina per spostare."
+        style={{ cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none' }}
+        aria-label="Rappresentazione visiva del muro e degli oggetti. Usa la rotellina del mouse o il tocco per zoomare e trascinare."
       >
         {containerWidth > 0 && (
           <svg 
@@ -148,13 +199,17 @@ const Visualization: React.FC<{ data: VisualData }> = ({ data }) => {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUpOrLeave}
             onMouseLeave={handleMouseUpOrLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
           >
             <title>Schema di posizionamento interattivo</title>
             <desc>
               Un rettangolo grigio rappresenta il muro. I rettangoli blu rappresentano gli oggetti.
               Sopra ogni oggetto, un'etichetta viola mostra la posizione del centro. Sotto, i numeri indicano le dimensioni degli spazi.
               Se la spaziatura è uniforme, viene mostrata una sola misura al centro. Se la spaziatura è specificata, vengono mostrati gli spazi laterali e quelli tra oggetti.
-              La vista è interattiva: usa la rotellina per zoomare e trascina per spostare la visuale.
+              La vista è interattiva: usa la rotellina per zoomare e trascina per spostare la visuale. Sui dispositivi mobili, usa due dita per zoomare e un dito per trascinare.
             </desc>
             <g transform={`translate(${transform.translateX}, ${transform.translateY}) scale(${transform.scale})`}>
               {/* Wall */}
