@@ -3,6 +3,10 @@ import React, { useState } from 'react';
 import Visualization from './Visualization';
 import type { VisualData } from './Visualization';
 
+// Declare types for CDN libraries
+declare const html2canvas: any;
+declare const jspdf: any;
+
 const App: React.FC = () => {
   const [wallWidth, setWallWidth] = useState<string>('300');
   const [numObjects, setNumObjects] = useState<string>('3');
@@ -11,6 +15,7 @@ const App: React.FC = () => {
   const [results, setResults] = useState<string | null>(null);
   const [visualData, setVisualData] = useState<VisualData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     event.target.select();
@@ -44,7 +49,7 @@ const App: React.FC = () => {
     }
 
     if (objW <= 0) {
-      setError('La larghezza dell\'oggetto deve essere maggiore di zero.');
+      setError("La larghezza dell'oggetto deve essere maggiore di zero.");
       return;
     }
 
@@ -146,6 +151,108 @@ const App: React.FC = () => {
     setResults(resultHtml.trim());
   };
 
+  const handleExportPDF = async () => {
+    if (!results) return;
+
+    const visualizationElement = document.getElementById('visualization-container');
+    const resultsElement = document.getElementById('results');
+    if (!visualizationElement || !resultsElement) {
+        console.error("Could not find elements to export.");
+        setError("Errore durante l'esportazione: elementi non trovati.");
+        return;
+    }
+
+    setIsExporting(true);
+    setError(null);
+
+    try {
+        const canvas = await html2canvas(visualizationElement, { 
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true, 
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+
+        const doc = new jspdf.jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        const contentWidth = pageWidth - margin * 2;
+        let currentY = 20;
+
+        doc.setFontSize(18);
+        doc.text("Riepilogo Posizionamento Oggetti", pageWidth / 2, currentY, { align: 'center' });
+        currentY += 15;
+
+        doc.setFontSize(12);
+        doc.text("Parametri Utilizzati", margin, currentY);
+        currentY += 6;
+        doc.setFontSize(10);
+        doc.text(`- Larghezza Muro: ${wallWidth} cm`, margin + 5, currentY);
+        currentY += 5;
+        doc.text(`- Numero Oggetti: ${numObjects}`, margin + 5, currentY);
+        currentY += 5;
+        doc.text(`- Larghezza Oggetto: ${objectWidth} cm`, margin + 5, currentY);
+        currentY += 5;
+        if (desiredSpacing) {
+            doc.text(`- Spaziatura Desiderata: ${desiredSpacing} cm`, margin + 5, currentY);
+        } else {
+            doc.text(`- Spaziatura: Uniforme`, margin + 5, currentY);
+        }
+        currentY += 10;
+        
+        doc.setFontSize(12);
+        doc.text("Visualizzazione", margin, currentY);
+        currentY += 6;
+        
+        const imgProps = doc.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * contentWidth) / imgProps.width;
+        
+        if (currentY + imgHeight > pageHeight - margin) {
+            doc.addPage();
+            currentY = margin;
+        }
+        
+        doc.addImage(imgData, 'JPEG', margin, currentY, contentWidth, imgHeight);
+
+        // Force a new page for the detailed results
+        doc.addPage();
+        currentY = 20; // Reset Y position for the new page
+
+        doc.setFontSize(12);
+        doc.text("Risultati Dettagliati", margin, currentY);
+        currentY += 8;
+
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(9);
+        const resultsText = resultsElement.innerText;
+        const splitText = doc.splitTextToSize(resultsText, contentWidth);
+
+        const textLines = Array.isArray(splitText) ? splitText : [splitText];
+        const textBlockHeight = textLines.length * (doc.getLineHeight() / doc.internal.scaleFactor);
+
+        if (currentY + textBlockHeight > pageHeight - margin) {
+            doc.addPage();
+            currentY = margin;
+        }
+
+        doc.text(textLines, margin, currentY);
+
+        doc.save('Centratore-Oggetti-Risultati.pdf');
+
+    } catch (e) {
+        console.error("Error exporting to PDF:", e);
+        setError("Si è verificato un errore durante la creazione del PDF.");
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-white rounded-lg shadow-xl p-6 md:p-8">
@@ -233,7 +340,7 @@ const App: React.FC = () => {
           <div className="space-y-6 mt-6 lg:mt-0">
             {/* Visualization Section */}
             {visualData && (
-              <fieldset className="border border-gray-300 p-4 rounded-md">
+              <fieldset id="visualization-container" className="border border-gray-300 p-4 rounded-md bg-white">
                  <legend className="px-2 text-lg font-semibold text-gray-700">Visualizzazione</legend>
                  <Visualization data={visualData} />
               </fieldset>
@@ -247,17 +354,29 @@ const App: React.FC = () => {
                   {error}
                 </div>
               )}
-              {results && (
-                <pre
-                  id="results"
-                  className="mt-2 bg-gray-50 p-4 rounded-md font-mono text-sm text-gray-800 select-none overflow-y-auto max-h-[300px] whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: results }}
-                ></pre>
-              )}
-              {!error && !results && (
-                 <div className="mt-2 text-gray-500 text-center py-4">
-                    I risultati appariranno qui.
-                </div>
+              {results ? (
+                <>
+                  <pre
+                    id="results"
+                    className="mt-2 bg-gray-50 p-4 rounded-md font-mono text-sm text-gray-800 select-all overflow-y-auto max-h-[300px] whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: results }}
+                  ></pre>
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={handleExportPDF}
+                      disabled={isExporting}
+                      className="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isExporting ? 'Esportazione...' : 'Esporta PDF'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                 !error && (
+                   <div className="mt-2 text-gray-500 text-center py-4">
+                      I risultati appariranno qui.
+                  </div>
+                 )
               )}
             </fieldset>
           </div>
