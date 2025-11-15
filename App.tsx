@@ -148,112 +148,120 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg shadow-xl p-6 md:p-8 space-y-6">
-        <h1 className="text-3xl font-bold text-center text-gray-800">Centratore Oggetti</h1>
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow-xl p-6 md:p-8">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Centratore Oggetti</h1>
 
-        {/* Parameters Section */}
-        <fieldset className="border border-gray-300 p-4 rounded-md">
-          <legend className="px-2 text-lg font-semibold text-gray-700">Parametri</legend>
-          <div className="space-y-4 mt-2">
-            <div>
-              <label htmlFor="wallWidth" className="block text-sm font-medium text-gray-600 mb-1">
-                Larghezza Muro (cm):
-              </label>
-              <input
-                type="number"
-                id="wallWidth"
-                value={wallWidth}
-                onChange={(e) => setWallWidth(e.target.value)}
-                onFocus={handleFocus}
-                step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
-            <div>
-              <label htmlFor="numObjects" className="block text-sm font-medium text-gray-600 mb-1">
-                Numero Oggetti:
-              </label>
-              <input
-                type="number"
-                id="numObjects"
-                value={numObjects}
-                onChange={(e) => setNumObjects(e.target.value)}
-                onFocus={handleFocus}
-                min="1"
-                step="1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
-            <div>
-              <label htmlFor="objectWidth" className="block text-sm font-medium text-gray-600 mb-1">
-                Larghezza Oggetto (cm):
-              </label>
-              <input
-                type="number"
-                id="objectWidth"
-                value={objectWidth}
-                onChange={(e) => setObjectWidth(e.target.value)}
-                onFocus={handleFocus}
-                step="0.1"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
-            <div>
-              <label htmlFor="desiredSpacing" className="block text-sm font-medium text-gray-600 mb-1">
-                Spaziatura Desiderata (cm) <span className="font-normal text-gray-500">(opzionale)</span>:
-              </label>
-              <input
-                type="number"
-                id="desiredSpacing"
-                value={desiredSpacing}
-                onChange={(e) => setDesiredSpacing(e.target.value)}
-                onFocus={handleFocus}
-                step="0.1"
-                min="0"
-                placeholder="Lascia vuoto per spaziatura uniforme"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-              />
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
+          {/* --- Left Column: Inputs --- */}
+          <div className="flex flex-col space-y-6">
+            {/* Parameters Section */}
+            <fieldset className="border border-gray-300 p-4 rounded-md">
+              <legend className="px-2 text-lg font-semibold text-gray-700">Parametri</legend>
+              <div className="space-y-4 mt-2">
+                <div>
+                  <label htmlFor="wallWidth" className="block text-sm font-medium text-gray-600 mb-1">
+                    Larghezza Muro (cm):
+                  </label>
+                  <input
+                    type="number"
+                    id="wallWidth"
+                    value={wallWidth}
+                    onChange={(e) => setWallWidth(e.target.value)}
+                    onFocus={handleFocus}
+                    step="0.1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="numObjects" className="block text-sm font-medium text-gray-600 mb-1">
+                    Numero Oggetti:
+                  </label>
+                  <input
+                    type="number"
+                    id="numObjects"
+                    value={numObjects}
+                    onChange={(e) => setNumObjects(e.target.value)}
+                    onFocus={handleFocus}
+                    min="1"
+                    step="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="objectWidth" className="block text-sm font-medium text-gray-600 mb-1">
+                    Larghezza Oggetto (cm):
+                  </label>
+                  <input
+                    type="number"
+                    id="objectWidth"
+                    value={objectWidth}
+                    onChange={(e) => setObjectWidth(e.target.value)}
+                    onFocus={handleFocus}
+                    step="0.1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="desiredSpacing" className="block text-sm font-medium text-gray-600 mb-1">
+                    Spaziatura Desiderata (cm) <span className="font-normal text-gray-500">(opzionale)</span>:
+                  </label>
+                  <input
+                    type="number"
+                    id="desiredSpacing"
+                    value={desiredSpacing}
+                    onChange={(e) => setDesiredSpacing(e.target.value)}
+                    onFocus={handleFocus}
+                    step="0.1"
+                    min="0"
+                    placeholder="Lascia vuoto per spaziatura uniforme"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  />
+                </div>
+              </div>
+            </fieldset>
+            
+            <button
+              id="calculateBtn"
+              onClick={calculatePositions}
+              className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
+            >
+              Calcola Posizioni
+            </button>
           </div>
-        </fieldset>
-        
-        <button
-          id="calculateBtn"
-          onClick={calculatePositions}
-          className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105"
-        >
-          Calcola Posizioni
-        </button>
+          
+          {/* --- Right Column: Outputs --- */}
+          <div className="space-y-6 mt-6 lg:mt-0">
+            {/* Visualization Section */}
+            {visualData && (
+              <fieldset className="border border-gray-300 p-4 rounded-md">
+                 <legend className="px-2 text-lg font-semibold text-gray-700">Visualizzazione</legend>
+                 <Visualization data={visualData} />
+              </fieldset>
+            )}
 
-        {/* Visualization Section */}
-        {visualData && (
-          <fieldset className="border border-gray-300 p-4 rounded-md">
-             <legend className="px-2 text-lg font-semibold text-gray-700">Visualizzazione</legend>
-             <Visualization data={visualData} />
-          </fieldset>
-        )}
-
-        {/* Results Section */}
-        <fieldset className="border border-gray-300 p-4 rounded-md">
-          <legend className="px-2 text-lg font-semibold text-gray-700">Risultati Posizionamento</legend>
-          {error && (
-            <div id="error-message" className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md my-2">
-              {error}
-            </div>
-          )}
-          {results && (
-            <pre
-              id="results"
-              className="mt-2 bg-gray-50 p-4 rounded-md font-mono text-sm text-gray-800 select-none overflow-y-auto max-h-[300px] whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ __html: results }}
-            ></pre>
-          )}
-          {!error && !results && (
-             <div className="mt-2 text-gray-500 text-center py-4">
-                I risultati appariranno qui.
-            </div>
-          )}
-        </fieldset>
+            {/* Results Section */}
+            <fieldset className="border border-gray-300 p-4 rounded-md">
+              <legend className="px-2 text-lg font-semibold text-gray-700">Risultati Posizionamento</legend>
+              {error && (
+                <div id="error-message" className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md my-2">
+                  {error}
+                </div>
+              )}
+              {results && (
+                <pre
+                  id="results"
+                  className="mt-2 bg-gray-50 p-4 rounded-md font-mono text-sm text-gray-800 select-none overflow-y-auto max-h-[300px] whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: results }}
+                ></pre>
+              )}
+              {!error && !results && (
+                 <div className="mt-2 text-gray-500 text-center py-4">
+                    I risultati appariranno qui.
+                </div>
+              )}
+            </fieldset>
+          </div>
+        </div>
       </div>
     </div>
   );
